@@ -23,25 +23,75 @@ below describe the current builds.
 
 ## What this fork adds
 
-- A color ST7735 interface in landscape orientation, with readable 8×16 text,
-  colored probe numbers, component symbols, separate capacitance/ESR rows,
-  and a battery indicator.
-- A faster display transport with working screen clearing. Fonts and symbols
-  are compressed losslessly to fit the ATmega324PA's 32 KiB flash.
-- Separate TC1 and T7 configurations, including battery corrections, an external
-  2.5 V reference, onboard IR reception and the dedicated A/K Zener input.
-- Auto-hold results, **Exit first in the menu**, and approximately 60-second
-  automatic shutdown while waiting on a held result. Tools disable that timer;
-  continuous probing retains shutdown after five empty tests.
-- E24 resistor color bands, EIA-96 resistor markings, trimmer total/ratio,
-  capacitor voltage loss, BJT test current and reverse hFE.
-- ESR and capacitor leakage tools, R/C/L monitoring, diode/LED quick-check,
-  optocoupler testing, and the existing self-test/calibration tools.
-- A separate SDCC-built **STC8G1K08 T7 power controller**, with button forwarding,
-  shutdown and wake-up. The R3 build was confirmed working on the documented T7;
-  reported whole-board switched-off current was 0.25 mA.
-- Isolated Mac-friendly builds and checks for effective configuration, flash
-  limits, font/symbol rendering, display transfers and power-controller logic.
+There are two kinds of firmware changes here: existing m-firmware capabilities
+selected/configured for these boards, and code implemented by this fork. The
+comparison below is against the original **1.56m** checkout (`5d33dc9`).
+
+### Existing upstream features enabled or configured here
+
+These capabilities already exist in m-firmware; this fork enables them and sets
+the wiring, geometry, colors or calibration values needed by the documented TC1
+and T7. They are not new measurement algorithms written for this fork.
+
+| Upstream capability | Configuration in this fork |
+| --- | --- |
+| ST7735 color display, fonts, semiconductor symbols, colored probe numbers and battery indicator | Landscape orientation, offsets, existing 8×16 font, white/cyan/yellow palette and battery footer; configured in `config.h`, `config_644.h` and `colors.h` |
+| Hardware support and voltage corrections | ATmega324PA at 16 MHz; probe, LCD and button wiring; battery offsets; 2.5 V reference; onboard IR on PD3; dedicated A/K Zener input and divider scaling |
+| Auto-hold and menu shortcuts | `UI_AUTOHOLD`, `UI_SHORT_CIRCUIT_MENU`, `UI_MAINMENU_POWERON_BUTTON` |
+| Automatic shutdown | Existing `POWER_OFF_TIMEOUT=60` in auto-hold and five-empty-test cutoff; the fork also makes a small implementation optimization described below |
+| Resistor information | E24 color bands, EIA-96 markings and trimmer total/ratio (`SW_R_E24_5_CC`, `SW_R_E96_EIA96`, `SW_R_TRIMMER`) |
+| Additional measurement information | Capacitor voltage loss, BJT test current and reverse hFE (`SW_C_VLOSS`, `SW_HFE_CURRENT`, `SW_REVERSE_HFE`) |
+| Measurement tools | ESR, capacitor leakage, R/C/L monitor, diode/LED quick-check, optocoupler testing, self-test, adjustment and calibration save/load |
+
+The battery and Zener corrections are board-specific **settings derived from
+measurements**, using upstream correction mechanisms. Likewise, reference
+measurement and IR decoding use upstream code. The existing [tc1-u4 project](https://github.com/atar-axis/tc1-u4)
+provides the TC1's separate STC15 controller firmware; that firmware was not
+implemented by this fork.
+
+### Firmware code implemented by this fork
+
+- **T7 STC8G power controller:** a separate SDCC implementation for the
+  STC8G1K08, following the button/power interface described by tc1-u4. It adds
+  the STC8G GPIO/timer setup and R3 STOP/wake handling, including fixes for
+  standby restart. Sources: [power-controller/stc8g](power-controller/stc8g).
+  R3 was confirmed working on the documented T7; reported whole-board
+  switched-off current was 0.25 mA.
+- **Faster ST7735 transfers and compatible clearing:** a fixed-wiring AVR
+  assembly writer sends each 16-bit pixel with fewer CPU cycles. Screen erasure
+  uses the same working transfer timing. This is the fork's own transport in
+  [ST7735_fast.h](ST7735_fast.h), integrated into [ST7735.c](ST7735.c), with no
+  OneBitDisplay dependency.
+- **Lossless font and symbol compression:** new packed tables and decoding paths
+  retain the existing upstream glyphs and semiconductor symbols while reducing
+  flash use. Unused optional symbol tails are omitted conditionally, with symbol
+  IDs preserved. This helps fit the selected features into 32 KiB; the existing
+  font and semiconductor artwork are not claimed as new designs.
+- **Additional passive-component icons and layout:** new resistor/capacitor
+  artwork and a renderer place 32×32 icons at the top right. Capacitor ESR moves
+  to a separate labeled row. The `UI_TC1` code in [ST7735.c](ST7735.c) and
+  [main.c](main.c) implements this for both targets; an accompanying string guard
+  keeps the ESR label available independently of the dedicated ESR tool.
+- **Exit first in the menu:** [user.c](user.c) changes the item order for the TC1
+  and T7 profiles so Exit is the initially selected entry. Upstream's menu and
+  single-button navigation are retained.
+- **Smaller auto-off bookkeeping:** [user.c](user.c) uses an 8-bit timeout
+  counter for settings up to 127 seconds, retains a 16-bit counter for longer
+  settings, and simplifies the timeout tick handling. Automatic shutdown itself
+  is an upstream feature.
+
+### Build, test and documentation additions
+
+- Separate `BOARD=TC1` / `BOARD=T7` profiles and isolated build wrappers in
+  [tools](tools), with explicit compiler/linker size optimizations so both builds
+  retain the selected tools. These are build changes, not new test modes.
+- Font/symbol packing generators and [tests](tests) for effective configuration,
+  HEX limits/checksums, original-versus-packed pixels, display transfers and line
+  clearing. The STC8G directory also adds controller, standby and linked-image
+  checks.
+- Ready-built [release assets](https://github.com/fwachsmuth/ComponentTester/releases/latest)
+  with checksums, Mac build/flashing instructions, board measurement notes and
+  the Zener calibration procedure below.
 
 Short all three numbered probes to enter the menu, or press the button twice
 at startup. Short presses advance menu items; hold to select. The Zener tool
