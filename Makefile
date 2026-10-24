@@ -297,7 +297,7 @@ prog_ee: ${NAME} ${NAME}.eep ${NAME}.lss size
 dist: clean
 	cd ..; tar -czf ${DIST}/${DIST}.tgz \
 	  ${DIST}/*.h ${DIST}/*.c ${DIST}/*.S ${DIST}/bitmaps/*.h \
-	  ${DIST}/Makefile ${DIST}/README ${DIST}/CHANGES \
+	  ${DIST}/Makefile ${DIST}/README.md ${DIST}/README.upstream ${DIST}/CHANGES \
 	  ${DIST}/README.de ${DIST}/CHANGES.de ${DIST}/Clones \
 	  ${DIST}/EUPL-v1.2.txt ${DIST}/dep ${DIST}/gcrt1.inc-builder
 
