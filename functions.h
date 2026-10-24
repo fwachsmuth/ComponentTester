@@ -49,6 +49,10 @@
   extern void LCD_Clear(void);
   extern void LCD_CharPos(uint8_t x, uint8_t y);
   extern void LCD_Cursor(uint8_t Mode);
+
+  #ifdef UI_TC1
+  extern void LCD_TC1Passive(uint8_t ID);
+  #endif
   extern void LCD_Char(unsigned char Char);
 
   #if ! defined (UI_SERIAL_COPY) && ! defined (UI_SERIAL_COMMANDS)

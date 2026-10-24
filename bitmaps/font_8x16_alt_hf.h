@@ -41,6 +41,11 @@
  *    - bit #0: left / bit #7: right (horizontally flipped)
  */
 
+#if (defined(BOARD_T7) || defined(BOARD_TC1)) && defined(FONT_EXTRA)
+#define FONT_ROWS_PACKED
+#include "font_8x16_alt_hf_packed.h"
+#else
+
 const uint8_t FontData[] PROGMEM = {
   /* symbols and special characters */ 
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,   /* 0x00 n/a */  
@@ -464,6 +469,8 @@ const uint8_t FontTable[] PROGMEM = {
   0xff         /* 0xff -> n/a */
 };
 
+
+#endif /* raw font data and mapping */
 
 #endif
 

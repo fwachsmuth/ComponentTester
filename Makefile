@@ -22,13 +22,13 @@ PROJECT = ComponentTester
 # - ATmega 1280            : atmega1280
 # - ATmega 1284/1284P      : atmega1284
 # - ATmega 2560            : atmega2560
-MCU = atmega328
+MCU = atmega324p
 
 # MCU freqency:
 # - 8MHz  : 8
 # - 16MHz : 16
 # - 20MHz : 20
-FREQ = 8
+FREQ = 16
 
 # oscillator type
 # - internal RC oscillator      : RC
@@ -68,7 +68,7 @@ endif
 # - ATmega 1284   : m1284
 # - ATmega 1284P  : m1284p
 # - ATmega 2560   : m2560
-PARTNO = m328p
+PARTNO = m324pa
 
 # avrdude: ISP programmer, port and options
 
@@ -136,19 +136,33 @@ CC = avr-gcc
 CPP = avr-g++
 CFLAGS = -mmcu=${MCU} -Wall -I. -Ibitmaps
 CFLAGS += -DF_CPU=${FREQ}000000UL
+ifneq ($(filter ${BOARD},T7 TC1),)
+  CFLAGS += -DBOARD_${BOARD}
+  ifeq (${DISPLAY_FAST},1)
+    CFLAGS += -DT7_FAST_DISPLAY
+  endif
+endif
 CFLAGS += -DOSC_STARTUP=${OSC_STARTUP}
 CFLAGS += -gdwarf-2 -std=gnu99 -Os -mcall-prologues
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-#CFLAGS += -flto
+# Whole-program optimization keeps the TC1 tools within its 32 KiB flash.
+# Keep the same flag at compilation and linking.
+CFLAGS += -flto -ffunction-sections -fdata-sections
+ifneq ($(filter ${BOARD},T7 TC1),)
+  # Keep all tools plus auto-off inside the ATmega324PA flash.
+  T7_SIZE_FLAGS = -fno-split-wide-types -fno-tree-scev-cprop -fno-tree-ter -fno-jump-tables -fno-guess-branch-probability
+  CFLAGS += ${T7_SIZE_FLAGS}
+endif
 CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d
 
 # linker flags
-LDFLAGS = -mmcu=${MCU} -Wl,-Map=${NAME}.map
+LDFLAGS = -mmcu=${MCU} -Os -mcall-prologues -flto -Wl,-Map=${NAME}.map
+LDFLAGS += ${T7_SIZE_FLAGS}
 ifeq (${OPTIMIZE_VECTORS},yes)
   LDFLAGS += -nostartfiles
 endif
 # > 128kB flash
-LDFLAGS += -Wl,-relax
+LDFLAGS += -Wl,-relax,--gc-sections
 
 # hex file flags
 HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature

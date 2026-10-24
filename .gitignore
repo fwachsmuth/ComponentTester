@@ -1,5 +1,6 @@
 ComponentTester
 dep
+/build/
 
 *.o
 *.eep
@@ -15,3 +16,8 @@ dep
 *.old
 *.orig
 *.rej
+
+# Local Python caches and macOS metadata
+__pycache__/
+*.py[cod]
+.DS_Store

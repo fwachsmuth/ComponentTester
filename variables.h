@@ -203,7 +203,7 @@
     const unsigned char Profile3_str[] MEM_TYPE = "#3";
   #endif
 
-  #ifdef SW_ESR_TOOL
+  #if defined (SW_ESR_TOOL) || defined (UI_TC1)
     const unsigned char ESR_str[] MEM_TYPE = "ESR";
   #endif
 
@@ -716,7 +716,7 @@
     extern const unsigned char Menu_or_Test_str[];
   #endif
 
-  #ifdef SW_ESR_TOOL
+  #if defined (SW_ESR_TOOL) || defined (UI_TC1)
     extern const unsigned char ESR_str[];
   #endif
 

@@ -80,7 +80,9 @@
  *    reference
  */
 
-//#define HW_REF25
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define HW_REF25
+#endif
 
 
 /*
@@ -89,7 +91,11 @@
  *  - or use >= 5.5 digit DMM to measure the voltage
  */
 
+#ifdef BOARD_T7
+#define UREF_25           2499
+#else
 #define UREF_25           2495
+#endif
 
 
 /*
@@ -114,7 +120,9 @@
  *  - uncomment to enable
  */
 
-//#define HW_ZENER
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define HW_ZENER
+#endif
 
 
 /*
@@ -125,9 +133,20 @@
  *  - uncomment to enable and adjust resistor values
  */
 
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define ZENER_DIVIDER_CUSTOM
+#define ZENER_R1         100000
+#ifdef BOARD_TC1
+/* Effective calibration value, not a measured resistor: loaded K/PA4 ~9.51. */
+#define ZENER_R2         11750
+#else
+#define ZENER_R2         12000    /* T7 checked against five Fluke comparisons */
+#endif
+#else
 //#define ZENER_DIVIDER_CUSTOM
 #define ZENER_R1         180000
 #define ZENER_R2         20000
+#endif
 
 
 /*
@@ -137,7 +156,9 @@
  *  - uncomment to enable
  */
 
-//#define ZENER_UNSWITCHED
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define ZENER_UNSWITCHED
+#endif
 
 
 /*
@@ -255,7 +276,9 @@
  *  - for a confirmation beep enable SW_IR_RX_BEEP
  */
 
-//#define HW_IR_RECEIVER
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define HW_IR_RECEIVER
+#endif
 
 
 /*
@@ -414,7 +437,8 @@
  *  - uncomment to enable
  */
 
-#define SW_PWM_SIMPLE
+/* TC1 probe #2 uses PC2, not the timer OC1B output PD4. */
+//#define SW_PWM_SIMPLE
 
 
 /*
@@ -461,7 +485,7 @@
  *  - uncomment to enable
  */
 
-//#define SW_ESR_TOOL
+#define SW_ESR_TOOL
 
 
 /*
@@ -479,7 +503,7 @@
  *  - uncomment to enable
  */
 
-#define SW_SQUAREWAVE
+//#define SW_SQUAREWAVE
 
 
 /*
@@ -489,7 +513,9 @@
  *  - uncomment to enable
  */
 
+#if !defined(BOARD_T7) && !defined(BOARD_TC1)
 #define SW_IR_RECEIVER
+#endif
 
 
 /*
@@ -644,7 +670,7 @@
  *  - uncomment to enable
  */
 
-//#define SW_CAP_LEAKAGE
+#define SW_CAP_LEAKAGE
 
 
 /*
@@ -653,7 +679,7 @@
  *  - uncomment to enable
  */
 
-//#define SW_REVERSE_HFE
+#define SW_REVERSE_HFE
 
 
 /*
@@ -663,7 +689,9 @@
  *  - uncomment to enable
  */
 
-//#define SW_HFE_CURRENT
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define SW_HFE_CURRENT
+#endif
 
 
 /*
@@ -685,7 +713,7 @@
 //#define SW_MONITOR_R          /* just R */
 //#define SW_MONITOR_C          /* just C plus ESR */
 //#define SW_MONITOR_L          /* just L */
-//#define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
+#define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
 //#define SW_MONITOR_RL         /* R plus L */
 
 
@@ -715,12 +743,14 @@
  */
 
 //#define SW_R_E24_5_T          /* E24 5% tolerance, text */
-//#define SW_R_E24_5_CC         /* E24 5% tolerance, color-code */
+#define SW_R_E24_5_CC         /* E24 5% tolerance, color-code */
 //#define SW_R_E24_1_T          /* E24 1% tolerance, text */
 //#define SW_R_E24_1_CC         /* E24 1% tolerance, color-code */
 //#define SW_R_E96_T            /* E96 1% tolerance, text */
 //#define SW_R_E96_CC           /* E96 1% tolerance, color-code */
-//#define SW_R_E96_EIA96        /* E96 1% tolerance, EIA-96 code */
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define SW_R_E96_EIA96
+#endif        /* E96 1% tolerance, EIA-96 code */
 
 
 /*
@@ -758,7 +788,7 @@
  *  - uncomment to enable
  */
 
-//#define SW_R_TRIMMER
+#define SW_R_TRIMMER
 
 
 /*
@@ -766,7 +796,9 @@
  *  - uncomment to enable
  */ 
 
-//#define SW_C_VLOSS
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define SW_C_VLOSS
+#endif
 
 
 /*
@@ -783,7 +815,7 @@
  *  - uncomment to enable
  */
 
-//#define SW_DIODE_LED
+#define SW_DIODE_LED
 
 
 /*
@@ -914,7 +946,7 @@
  *  - uncomment to enable.
  */
 
-//#define UI_PREFIX
+#define UI_PREFIX
 
 
 /*
@@ -931,7 +963,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_AUTOHOLD
+#define UI_AUTOHOLD
 
 
 /*
@@ -949,7 +981,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_SHORT_CIRCUIT_MENU
+#define UI_SHORT_CIRCUIT_MENU
 
 
 /*
@@ -957,7 +989,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_MAINMENU_POWERON_BUTTON
+#define UI_MAINMENU_POWERON_BUTTON
 
 
 /*
@@ -1042,7 +1074,9 @@
  *  - uncomment to enable, also adjust timeout (in s)
  */
 
-//#define POWER_OFF_TIMEOUT     60
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+#define POWER_OFF_TIMEOUT     60
+#endif
 
 
 /*
@@ -1053,6 +1087,9 @@
  */
 
 #define SW_SYMBOLS
+
+/* TC1: roomy result pages on the 160x128 color display. */
+#define UI_TC1
 
 
 /*
@@ -1070,7 +1107,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_QUESTION_MARK
+#define UI_QUESTION_MARK
 
 
 /*
@@ -1125,7 +1162,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_BATTERY
+#define UI_BATTERY
 
 
 /*
@@ -1133,7 +1170,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_BATTERY_LASTLINE
+#define UI_BATTERY_LASTLINE
 
 
 /*
@@ -1143,7 +1180,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_PROBE_REVERSED
+#define UI_PROBE_REVERSED
 
 
 /*
@@ -1164,7 +1201,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_COLORED_TITLES
+#define UI_COLORED_TITLES
 
 
 /*
@@ -1174,7 +1211,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_COLORED_CURSOR
+#define UI_COLORED_CURSOR
 
 
 /*
@@ -1185,7 +1222,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_COLORED_VALUES
+#define UI_COLORED_VALUES
 
 
 /*
@@ -1252,7 +1289,7 @@
  *  - uncomment to enable
  */
 
-//#define UI_CENTER_ALIGN
+#define UI_CENTER_ALIGN
 
 
 /*
@@ -1289,8 +1326,8 @@
  *  - uncomment one
  */ 
 
-#define DATA_EEPROM           /* store data in EEPROM */
-//#define DATA_FLASH            /* store data in Flash */
+//#define DATA_EEPROM           /* store data in EEPROM */
+#define DATA_FLASH            /* store data in Flash */
 
 
 
@@ -1322,8 +1359,8 @@
  */
 
 //#define BAT_NONE
-//#define BAT_DIRECT
-#define BAT_DIVIDER
+#define BAT_DIRECT
+//#define BAT_DIVIDER
 
 
 /*
@@ -1358,7 +1395,15 @@
  *  - Schottky diode about 200mV / PNP BJT about 100mV.
  */  
 
+/* T7: seven unloaded battery/display pairs, 2026-10-22. */
+#ifdef BOARD_T7
+#define BAT_OFFSET       45
+#elif defined(BOARD_TC1)
+/* TC1 display was 270 mV high with the inherited 290 mV offset. */
+#define BAT_OFFSET       20
+#else
 #define BAT_OFFSET       290
+#endif
 
 
 /*
@@ -1367,7 +1412,7 @@
  *  - Voltage drop BAT_OFFSET is considered in calculation.
  */
 
-#define BAT_WEAK         7400
+#define BAT_WEAK         3400
 
 
 /*
@@ -1376,7 +1421,7 @@
  *  - Voltage drop BAT_OFFSET is considered in calculation.
  */
 
-#define BAT_LOW          6400 
+#define BAT_LOW          3100
 
 
 /*

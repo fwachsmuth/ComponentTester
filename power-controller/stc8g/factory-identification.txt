@@ -1,0 +1,31 @@
+Read-only stcgal identification reported by the user, 2026-10-20.
+Command: stcgal -D -P stc8g -p /dev/cu.usbserial-A50285BI -l 2400
+
+Name: STC8G1K08-8PIN
+Magic: F7A4
+Code flash: 8.0 KB
+EEPROM flash: 4.0 KB
+Target frequency: 23.938 MHz
+Target BSL version: 7.3.12U
+Target wakeup frequency: 36.025 KHz
+Target ref. voltage: 1187 mV
+Target mfg. date: 2020-12-28
+
+reset_pin_enabled=False
+clock_gain=high
+watchdog_por_enabled=False
+watchdog_stop_idle=True
+watchdog_prescale=256
+low_voltage_reset=True
+low_voltage_threshold=0
+eeprom_erase_enabled=True
+bsl_pindetect_enabled=False
+por_reset_delay=long
+rstout_por_state=high
+uart1_remap=True
+uart2_passthrough=True
+uart2_pin_mode=push-pull
+epwm_open_drain=True
+program_eeprom_split=8192
+
+This records identification/options only, not the factory application code.

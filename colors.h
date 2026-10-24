@@ -393,10 +393,10 @@
 #define COLOR_BACKGROUND      COLOR_BLACK
 
 /* standard pen color */
-#define COLOR_PEN             COLOR_GREEN
+#define COLOR_PEN             COLOR_WHITE
 
 /* titles */
-#define COLOR_TITLE           COLOR_YELLOW
+#define COLOR_TITLE           COLOR_CYAN
 
 /* values */
 #define COLOR_VALUE           COLOR_YELLOW
@@ -417,7 +417,7 @@
 #define COLOR_MARKER          COLOR_YELLOW
 
 /* symbols */
-#define COLOR_SYMBOL          COLOR_YELLOW
+#define COLOR_SYMBOL          COLOR_WHITE
 
 /* color codes for probe pins */
 #define COLOR_PROBE_1         COLOR_YELLOW

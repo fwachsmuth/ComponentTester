@@ -692,6 +692,10 @@ void Show_Resistor(void)
   Display_NextLine();
   Display_Value(R1->Value, R1->Scale, LCD_CHAR_OMEGA);
 
+  #ifdef UI_TC1
+  if (R2 == NULL) LCD_TC1Passive(0);  /* resistor icon, top right */
+  #endif
+
   if (R2)                /* second resistor */
   {
     Display_Space();
@@ -897,12 +901,20 @@ void Show_Capacitor(void)
   Display_NextLine();              /* move to next line */
   Display_Value(MaxCap->Value, MaxCap->Scale, 'F');
 
+  #ifdef UI_TC1
+  LCD_TC1Passive(1);              /* capacitor icon, top right */
+  #endif
+
   #if defined (SW_ESR) || defined (SW_OLD_ESR)
   /* measure and display ESR */
   ESR = MeasureESR(MaxCap);        /* measure ESR */
   if (ESR < UINT16_MAX)            /* if successful */
   {
+    #ifdef UI_TC1
+    Display_NL_EEString_Space(ESR_str);  /* separate, labeled ESR row */
+    #else
     Display_Space();
+    #endif
     Display_Value(ESR, -2, LCD_CHAR_OMEGA);  /* display ESR */
   }
     #ifdef UI_SERIAL_COMMANDS

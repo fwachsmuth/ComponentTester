@@ -882,7 +882,11 @@ uint8_t TestKey(uint16_t Timeout, uint8_t Mode)
   uint16_t          Temp;               /* temp value */
   #endif
   #ifdef POWER_OFF_TIMEOUT
-  uint16_t          PwrTimeout = 0;     /* timeout for auto power-off (auto-hold mode) */
+  #if POWER_OFF_TIMEOUT <= 127
+  uint8_t           PwrTimeout = 0;     /* timeout in 500ms units */
+  #else
+  uint16_t          PwrTimeout = 0;     /* timeout in 500ms units */
+  #endif
   #endif
   #ifdef UI_KEY_HINTS
   uint8_t           Pos = 0;            /* X position for text */
@@ -1221,11 +1225,7 @@ uint8_t TestKey(uint16_t Timeout, uint8_t Mode)
         /* automatic power-off */
         if (PwrTimeout > 0)             /* power-off timeout enabled */
         {
-          if (PwrTimeout > 1)           /* some time left */
-          {
-            PwrTimeout--;               /* decrease counter */
-          }
-          else                          /* timeout */
+          if (--PwrTimeout == 0)        /* timeout after 500ms ticks */
           {
             Key = KEY_POWER_OFF;        /* signal power-off */
             Run = 0;                    /* exit loop */
@@ -2156,6 +2156,13 @@ uint8_t PresentMainMenu(void)
    *  - items are added in display order
    */
 
+#if defined(BOARD_T7) || defined(BOARD_TC1)
+  /* exit menu */
+  Item_Str[n] = (void *)Exit_str;
+  Item_ID[n] = MENUITEM_EXIT;
+  n++;
+#endif
+
   /*
    *  test/check/signal features
    */
@@ -2458,10 +2465,12 @@ uint8_t PresentMainMenu(void)
   n++;
   #endif
 
+#if !defined(BOARD_T7) && !defined(BOARD_TC1)
   /* exit menu */
   Item_Str[n] = (void *)Exit_str;
   Item_ID[n] = MENUITEM_EXIT;
   n++;
+#endif
 
 
   /*

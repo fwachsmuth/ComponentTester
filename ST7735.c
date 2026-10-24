@@ -295,6 +295,9 @@ void LCD_Data(uint8_t Data)
  *  - 2-byte value to send
  */
 
+#ifdef T7_FAST_DISPLAY
+#include "ST7735_fast.h"
+#else
 void LCD_Data2(uint16_t Data)
 {
   uint8_t           Byte;     /* data byte */
@@ -318,6 +321,8 @@ void LCD_Data2(uint16_t Data)
     LCD_PORT |= (1 << LCD_CS);     /* set /CSX high */
   #endif
 }
+
+#endif
 
 #endif
 
@@ -491,6 +496,9 @@ void LCD_ClearLine(uint8_t Line)
 
   while (y > 0)                    /* rows (character height) */
   {
+    #ifdef T7_FAST_DISPLAY
+    LCD_BackgroundRow(LCD_MAX_X - X_Start);
+    #else
     x = X_Start;                   /* reset start position */
     while (x < LCD_MAX_X)          /* all columns */
     {
@@ -499,6 +507,7 @@ void LCD_ClearLine(uint8_t Line)
 
       x++;                         /* next column */
     }
+    #endif
 
     y--;                           /* next row */
   }
@@ -623,6 +632,53 @@ void LCD_Init(void)
  *  - Char: character to display
  */
 
+#ifdef FONT_ROWS_PACKED
+static uint8_t FontIndex(uint8_t Char)
+{
+  uint8_t n;
+  if (Char >= 32 && Char <= 126) return Char - 16;
+  if (Char < 16) return pgm_read_byte(FontLow + Char);
+  for (n = 0; n < FONT_HIGH_COUNT; n++)
+    if (pgm_read_byte(FontHigh + n * 2) == Char)
+      return pgm_read_byte(FontHigh + n * 2 + 1);
+  return 255;
+}
+
+static uint8_t FontNibble(uint16_t *Position)
+{
+  uint8_t Value = pgm_read_byte(FontPacked + (*Position / 2));
+  if (!(*Position & 1)) Value >>= 4;
+  (*Position)++;
+  return Value & 15;
+}
+
+static void FontDecode(uint8_t Index, uint8_t *Buffer)
+{
+  uint8_t Glyph = Index & 0xf8;
+  uint16_t Position = pgm_read_word(FontOffsets + Glyph / 8);
+  do
+  {
+    uint16_t Mask = pgm_read_word(FontMasks + Glyph);
+    uint8_t Row, Value = 0;
+    for (Row = 0; Row < 16; Row++)
+    {
+      if (Mask & 1)
+      {
+        Value = FontNibble(&Position);
+        if (Value == 15)
+        {
+          Value = FontNibble(&Position) << 4;
+          Value |= FontNibble(&Position);
+        }
+        else Value = pgm_read_byte(FontDictionary + Value);
+      }
+      Buffer[Row] = Value;
+      Mask >>= 1;
+    }
+  } while (Glyph++ != Index);
+}
+#endif
+
 void LCD_Char(unsigned char Char)
 {
   uint8_t           *Table;        /* pointer to table */
@@ -634,13 +690,21 @@ void LCD_Char(unsigned char Char)
   uint8_t           Bits;          /* number of bits to be sent */
   uint8_t           n;             /* bitmap bit counter */
 
+  #ifdef FONT_ROWS_PACKED
+  uint8_t GlyphBuffer[16];
+  #endif
+
   /* prevent x overflow */
   if (UI.CharPos_X > LCD_CHAR_X) return;
 
+  #ifdef FONT_ROWS_PACKED
+  Index = FontIndex(Char);
+  #else
   /* get font index number from lookup table */
   Table = (uint8_t *)&FontTable;        /* start address */
   Table += Char;                        /* add offset for character */
   Index = pgm_read_byte(Table);         /* get index number */
+  #endif
   if (Index == 0xff) return;            /* no character bitmap available */
 
 
@@ -648,10 +712,15 @@ void LCD_Char(unsigned char Char)
    *  manage addressing
    */
 
+  #ifdef FONT_ROWS_PACKED
+  FontDecode(Index, GlyphBuffer);
+  Table = GlyphBuffer;
+  #else
   /* calculate start address of character bitmap */
   Table = (uint8_t *)&FontData;        /* start address of font data */
   Offset = FONT_BYTES_N * Index;       /* offset for character */
   Table += Offset;                     /* address of character data */
+  #endif
 
   /* LCD's address window */
   LCD_CharPos(UI.CharPos_X, UI.CharPos_Y);   /* update character position */
@@ -695,7 +764,11 @@ void LCD_Char(unsigned char Char)
       }
       Pixels -= Bits;              /* update counter */
 
+      #ifdef FONT_ROWS_PACKED
+      Index = *Table;
+      #else
       Index = pgm_read_byte(Table);     /* read byte */
+      #endif
 
       /* send color for each bit */
       n = Bits;
@@ -778,10 +851,14 @@ void LCD_Symbol(uint8_t ID)
   uint8_t           n;             /* bitmap bit counter */
   uint8_t           Factor = SYMBOL_RESIZE;  /* resize factor */
 
+  #ifdef SYMBOL_ROWS_PACKED
+  uint16_t RowIndex = (uint16_t)ID * SYMBOL_BYTES_Y;
+  #else
   /* calculate start address of character bitmap */
   Table = (uint8_t *)&SymbolData;       /* start address of symbol data */
   Offset = SYMBOL_BYTES_N * ID;         /* offset for symbol */
   Table += Offset;                      /* address of symbol data */
+  #endif
 
   /* LCD's address window */
   LCD_CharPos(UI.CharPos_X, UI.CharPos_Y);   /* update character position */
@@ -808,6 +885,9 @@ void LCD_Symbol(uint8_t ID)
   /* read symbol bitmap and send it to display */
   while (y <= SYMBOL_BYTES_Y)
   {
+    #ifdef SYMBOL_ROWS_PACKED
+    Table = (uint8_t *)SymbolRows + (uint16_t)pgm_read_byte(SymbolRowIndex + RowIndex++) * SYMBOL_BYTES_X;
+    #endif
     Table2 = Table;           /* save current pointer */
 
     while (Factor > 0)        /* resize symbol */
@@ -884,6 +964,57 @@ void LCD_Symbol(uint8_t ID)
 
 #endif
 
+
+
+
+#ifdef UI_TC1
+
+/* 16x16 line-art icons enlarged to 32x32 without a framebuffer.
+ * Keep the first two rows' rightmost four character cells free for these.
+ */
+static const uint16_t TC1PassiveIcons[2][16] PROGMEM = {
+  {0x0000, 0x0000, 0x0000, 0x0000,
+   0x0000, 0x1ff8, 0x1008, 0x1008,
+   0xf00f, 0x1008, 0x1008, 0x1ff8,
+   0x0000, 0x0000, 0x0000, 0x0000},
+  {0x0000, 0x0000, 0x0000, 0x0000,
+   0x0240, 0x0240, 0x0240, 0x0240,
+   0xfe7f, 0x0240, 0x0240, 0x0240,
+   0x0240, 0x0000, 0x0000, 0x0000}
+};
+
+void LCD_TC1Passive(uint8_t ID)
+{
+  uint8_t Row, Col;
+  uint16_t Bits;
+  uint8_t OldX = UI.CharPos_X, OldY = UI.CharPos_Y;
+
+  /* Fixed layout requires 8x16 text on a 160x128 landscape display. */
+  #if LCD_CHAR_X != 20 || LCD_CHAR_Y != 8 || FONT_SIZE_X != 8 || FONT_SIZE_Y != 16
+    #error UI_TC1 requires a 160x128 display and an 8x16 font
+  #endif
+  if (ID > 1) return;
+  LCD_CharPos(17, 2);             /* mark both occupied rows for clearing */
+  LCD_CharPos(17, 1);
+  X_End = X_Start + 31;
+  Y_End = Y_Start + 31;
+  LCD_AddressWindow();
+  LCD_Cmd(CMD_MEM_WRITE);
+  for (Row = 0; Row < 32; Row++)
+  {
+    Bits = pgm_read_word(&TC1PassiveIcons[ID][Row / 2]);
+    for (Col = 0; Col < 16; Col++)
+    {
+      uint16_t Color = (Bits & 1) ? COLOR_SYMBOL : COLOR_BACKGROUND;
+      LCD_Data2(Color);
+      LCD_Data2(Color);           /* each source pixel is two dots wide */
+      Bits >>= 1;
+    }
+  }
+  LCD_CharPos(OldX, OldY);        /* preserve pagination and text position */
+}
+
+#endif
 
 
 #ifdef FUNC_COLORCODE
